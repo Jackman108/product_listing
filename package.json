@@ -2,6 +2,7 @@
   "name": "product-listing",
   "version": "0.1.0",
   "private": true,
+  "description": "A React application for listing products.",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -37,5 +38,19 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jackman108/product_listing.git"
+  },
+  "keywords": [
+    "react",
+    "product",
+    "listing",
+    "API",
+    "axios"
+  ],
+  "author": "Eugene Korobov",
+  "license": "MIT",
+  "homepage": "http://localhost:3000"
 }

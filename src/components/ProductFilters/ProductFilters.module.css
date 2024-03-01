@@ -1,0 +1,45 @@
+/* ProductFilters.module.css */
+
+.product-filters-container {
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-gap: 10px;
+    text-align: center;
+}
+
+.product-filters-container input,
+.product-filters-container select {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.product-filters-container input[type="text"],
+.product-filters-container input[type="number"],
+.product-filters-container select {
+    width: 100%;
+}
+
+.product-filters-container input[type="text"]:focus,
+.product-filters-container input[type="number"]:focus,
+.product-filters-container select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.product-filters-container select {
+    padding-right: 20px;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="none" stroke="%23000000" stroke-width="2" d="M2.5 7.5l7 7 7-7"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .product-filters-container {
+        grid-template-columns: 1fr;
+    }
+}
