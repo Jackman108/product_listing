@@ -1,6 +1,14 @@
-//useProducts.js 
 import { useState, useEffect } from 'react';
-import { fetchProducts, fetchItems, fetchFields, filterProductsByName, filterProductsByPrice, filterProductsByBrand } from '../api/products';
+import { removeDuplicateProducts } from '../helpers/removeDuplicateProducts';
+import {
+    fetchProducts,
+    fetchItems,
+    fetchFields,
+    filterProductsByName,
+    filterProductsByPrice,
+    filterProductsByBrand
+} from '../api/products';
+
 
 const useProducts = () => {
     const [products, setProducts] = useState({ data: [], totalCount: 0 });
@@ -10,6 +18,7 @@ const useProducts = () => {
     const [brandFilter, setBrandFilter] = useState('');
     const [brandOptions, setBrandOptions] = useState([]);
     const [loadedProductsCount, setLoadedProductsCount] = useState(0);
+    const totalPages = Math.ceil(products.totalCount / 50);
 
     useEffect(() => {
         const loadProducts = async () => {
@@ -19,8 +28,8 @@ const useProducts = () => {
                     setProducts({ data: [], totalCount: 0 });
                     return;
                 }
-
-                let filteredProductIds = productIds;
+                
+                let filteredProductIds = removeDuplicateProducts(productIds);
 
                 if (nameFilter) {
                     const filteredByName = await filterProductsByName(nameFilter);
@@ -48,8 +57,7 @@ const useProducts = () => {
 
                 const productsData = await fetchItems(pageFilteredProductIds);
 
-                const uniqueProductsData = removeDuplicateProducts(productsData.data);
-                setProducts({ data: uniqueProductsData, totalCount });
+                setProducts({ data: productsData.data, totalCount });
 
                 setLoadedProductsCount(pageFilteredProductIds.length);
 
@@ -65,20 +73,6 @@ const useProducts = () => {
         loadProducts();
     }, [page, nameFilter, priceFilter, brandFilter]);
 
-    const removeDuplicateProducts = (products) => {
-        const uniqueProductsMap = {};
-        const uniqueProducts = [];
-
-        products.forEach(product => {
-            if (!uniqueProductsMap[product.id]) {
-                uniqueProductsMap[product.id] = true;
-                uniqueProducts.push(product);
-            }
-        });
-
-        return uniqueProducts;
-    };
-
     useEffect(() => {
         const loadBrandOptions = async () => {
             try {
@@ -88,7 +82,6 @@ const useProducts = () => {
                 console.error('Error loading brand options:', error);
             }
         };
-
         loadBrandOptions();
     }, []);
 
@@ -124,7 +117,7 @@ const useProducts = () => {
 
     const handlePriceFilterChange = (event) => {
         setPriceFilter(event.target.value);
-        setPage(1);
+        setPage(1); 
     };
 
     const handleBrandFilterChange = (event) => {
@@ -139,29 +132,6 @@ const useProducts = () => {
         updateTotalCount();
     };
 
-    const totalPages = Math.ceil(products.totalCount / 50);
-    const loadNextProducts = async () => {
-        try {
-            console.log('Loading next products...');
-            const { data: productIds, totalCount } = await fetchProducts(page + 1);
-            if (!productIds) {
-                // Если больше товаров нет, завершите загрузку
-                return;
-            }
-    
-            // Обновите состояние, добавив новые товары к текущему списку
-            setProducts(prevState => ({
-                data: [...prevState.data, ...productIds],
-                totalCount: totalCount
-            }));
-    
-            // Обновите количество загруженных товаров
-            setLoadedProductsCount(prevCount => prevCount + productIds.length);
-        } catch (error) {
-            console.error('Error loading next products:', error);
-        }
-    };
-    
     return {
         products,
         nameFilter,
@@ -174,8 +144,8 @@ const useProducts = () => {
         totalPages,
         handlePageChange,
         loadedProductsCount,
-        loadNextProducts
+        page
     };
 };
 
-export default useProducts;
+export default useProducts;// ProductList.js

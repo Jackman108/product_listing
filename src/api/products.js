@@ -3,23 +3,22 @@ import { generateAuthString } from '../utils/auth.js';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-export const fetchProducts = async (page) => {
+// возвращает идентификаторы всех имеющиеся товаров
+export const fetchProducts = async () => {
     try {
         const authString = generateAuthString();
         const response = await axios.post(
             API_URL,
             {
                 action: 'get_ids',
-                params: {
-                    offset: 0,
-                    limit: 1000 
-                }
+                params: {}
             },
             { headers: { 'X-Auth': authString } }
         );
+
         return {
             data: response.data.result,
-            totalCount: response.data.totalCount
+            totalCount: response.data.result.length
         };
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -27,14 +26,14 @@ export const fetchProducts = async (page) => {
     }
 };
 
-
+//возвращает упорядоченный список товаров со всеми характеристиками, если переданы идентификаторы товаров
 export const fetchItems = async (ids) => {
     try {
         const authString = generateAuthString();
         const items = [];
 
-        for (let i = 0; i < ids.length; i += 100) {
-            const chunk = ids.slice(i, i + 100);
+        for (let i = 0; i < ids.length; i += 50) {
+            const chunk = ids.slice(i, i + 50);
             const response = await axios.post(
                 API_URL,
                 {
@@ -57,6 +56,7 @@ export const fetchItems = async (ids) => {
         throw error;
     }
 };
+
 
 
 export const filterProductsByName = async (name) => {
@@ -104,7 +104,7 @@ export const filterProductsByPrice = async (price) => {
         throw error;
     }
 };
-
+//Возвращает упорядоченный список идентификаторов товаров, соответствующих заданному значению.
 export const filterProductsByBrand = async (brand) => {
     try {
         const authString = generateAuthString();
@@ -127,7 +127,7 @@ export const filterProductsByBrand = async (brand) => {
         throw error;
     }
 };
-
+//возвращает при передаче параметра field упорядоченный список значений данного поля товаров.
 export const fetchFields = async (field) => {
     try {
         const authString = generateAuthString();
