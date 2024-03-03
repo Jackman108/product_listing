@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { removeDuplicateProducts } from '../helpers/removeDuplicateProducts';
+import { useState, useEffect, useCallback } from 'react';
 import {
     fetchProducts,
     fetchItems,
@@ -20,6 +19,27 @@ const useProducts = () => {
     const [loadedProductsCount, setLoadedProductsCount] = useState(0);
     const totalPages = Math.ceil(products.totalCount / 50);
 
+    const applyFilters = useCallback(async (productIds) => {
+        let filteredProductIds = [...productIds]; 
+
+        if (nameFilter) {
+            const filteredByName = await filterProductsByName(nameFilter);
+            filteredProductIds = filteredProductIds.filter(id => filteredByName.data.includes(id));
+        }
+
+        if (priceFilter) {
+            const filteredByPrice = await filterProductsByPrice(priceFilter);
+            filteredProductIds = filteredProductIds.filter(id => filteredByPrice.data.includes(id));
+        }
+
+        if (brandFilter) {
+            const filteredByBrand = await filterProductsByBrand(brandFilter);
+            filteredProductIds = filteredProductIds.filter(id => filteredByBrand.data.includes(id));
+        }
+
+        return filteredProductIds;
+    }, [nameFilter, priceFilter, brandFilter]);
+
     useEffect(() => {
         const loadProducts = async () => {
             try {
@@ -28,50 +48,28 @@ const useProducts = () => {
                     setProducts({ data: [], totalCount: 0 });
                     return;
                 }
-                
-                let filteredProductIds = removeDuplicateProducts(productIds);
 
-                if (nameFilter) {
-                    const filteredByName = await filterProductsByName(nameFilter);
-                    filteredProductIds = filteredProductIds.filter(id => filteredByName.data.includes(id));
-                }
-
-                if (priceFilter) {
-                    const filteredByPrice = await filterProductsByPrice(priceFilter);
-                    filteredProductIds = filteredProductIds.filter(id => filteredByPrice.data.includes(id));
-                }
-
-                if (brandFilter) {
-                    const filteredByBrand = await filterProductsByBrand(brandFilter);
-                    filteredProductIds = filteredProductIds.filter(id => filteredByBrand.data.includes(id));
-                }
+                let filteredProductIds = await applyFilters(productIds);
 
                 setProducts(prevState => ({
                     ...prevState,
-                    totalCount: filteredProductIds.length
+                    totalCount: totalCount
                 }));
 
                 const startIndex = (page - 1) * 50;
-                const endIndex = Math.min(startIndex + 50, filteredProductIds.length);
-                const pageFilteredProductIds = filteredProductIds.slice(startIndex, endIndex);
+                const pageFilteredProductIds = filteredProductIds.slice(startIndex, startIndex + 50 - loadedProductsCount);
 
                 const productsData = await fetchItems(pageFilteredProductIds);
 
-                setProducts({ data: productsData.data, totalCount });
+                setProducts({ data: productsData.data.slice(0, 50), totalCount });
 
-                setLoadedProductsCount(pageFilteredProductIds.length);
-
+                setLoadedProductsCount(productsData.data.length);
             } catch (error) {
                 console.error('Error loading products:', error);
-                if (error.response && error.response.status === 500) {
-                    console.error('Authorization error, retrying...');
-                    setTimeout(loadProducts, 1000);
-                    return;
-                }
             }
         };
         loadProducts();
-    }, [page, nameFilter, priceFilter, brandFilter]);
+    }, [page, loadedProductsCount, applyFilters]);
 
     useEffect(() => {
         const loadBrandOptions = async () => {
@@ -87,22 +85,7 @@ const useProducts = () => {
 
     const updateTotalCount = async () => {
         try {
-            let filteredProductIds = [];
-
-            if (nameFilter) {
-                const filteredByName = await filterProductsByName(nameFilter);
-                filteredProductIds = filteredByName.data;
-            }
-
-            if (priceFilter) {
-                const filteredByPrice = await filterProductsByPrice(priceFilter);
-                filteredProductIds = filteredByPrice.data;
-            }
-
-            if (brandFilter) {
-                const filteredByBrand = await filterProductsByBrand(brandFilter);
-                filteredProductIds = filteredByBrand.data;
-            }
+            const filteredProductIds = await applyFilters([]);
 
             setProducts(prevState => ({ ...prevState, totalCount: filteredProductIds.length }));
         } catch (error) {
@@ -117,7 +100,7 @@ const useProducts = () => {
 
     const handlePriceFilterChange = (event) => {
         setPriceFilter(event.target.value);
-        setPage(1); 
+        setPage(1);
     };
 
     const handleBrandFilterChange = (event) => {
@@ -129,6 +112,7 @@ const useProducts = () => {
         setPage(pageNumber);
         setNameFilter('');
         setPriceFilter('');
+        setBrandFilter('');
         updateTotalCount();
     };
 
@@ -148,4 +132,4 @@ const useProducts = () => {
     };
 };
 
-export default useProducts;// ProductList.js
+export default useProducts;

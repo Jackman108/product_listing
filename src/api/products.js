@@ -1,32 +1,56 @@
 import axios from 'axios';
 import { generateAuthString } from '../utils/auth.js';
+import { removeDuplicateProductsId } from '../helpers/removeDuplicateProductsId.js';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-// возвращает идентификаторы всех имеющиеся товаров
+const handleRequestError = async (error, retryFunction) => {
+    if (error.response && error.response.status === 500) {
+        console.error('Authorization error, retrying...');
+        await retryFunction();
+        return;
+    }
+    console.error('Error:', error);
+    throw error;
+};
+
 export const fetchProducts = async () => {
     try {
-        const authString = generateAuthString();
-        const response = await axios.post(
-            API_URL,
-            {
-                action: 'get_ids',
-                params: {}
-            },
-            { headers: { 'X-Auth': authString } }
-        );
+        let productIds = [];
+        let totalCount = 0;
+        let offset = 0;
+        const limit = 1000;
 
-        return {
-            data: response.data.result,
-            totalCount: response.data.result.length
-        };
+        while (true) {
+            const authString = generateAuthString();
+            const response = await axios.post(
+                API_URL,
+                {
+                    action: 'get_ids',
+                    params: {
+                        offset,
+                        limit
+                    }
+                },
+                { headers: { 'X-Auth': authString } }
+            );
+            if (response && response.data && response.data.result.length === 0) {
+                break;
+            }
+
+            productIds = productIds.concat(response.data.result);
+            offset += limit;
+        }
+
+        productIds = removeDuplicateProductsId(productIds);
+        totalCount = productIds.length;
+
+        return { data: productIds, totalCount };
     } catch (error) {
-        console.error('Error fetching products:', error);
-        throw error;
+        await handleRequestError(error, () => fetchProducts());
     }
 };
 
-//возвращает упорядоченный список товаров со всеми характеристиками, если переданы идентификаторы товаров
 export const fetchItems = async (ids) => {
     try {
         const authString = generateAuthString();
@@ -44,7 +68,17 @@ export const fetchItems = async (ids) => {
                 },
                 { headers: { 'X-Auth': authString } }
             );
-            items.push(...response.data.result);
+
+            const productsWithId = response.data.result.map((product, index) => ({
+                ...product,
+                id: `${product.id}-${index}`
+            }));
+
+            productsWithId.forEach(product => {
+                if (!items.some(item => item.id === product.id)) {
+                    items.push(product);
+                }
+            });
         }
 
         return {
@@ -52,12 +86,9 @@ export const fetchItems = async (ids) => {
             totalCount: items.length
         };
     } catch (error) {
-        console.error('Error fetching items:', error);
-        throw error;
+        await handleRequestError(error, () => fetchItems(ids));
     }
 };
-
-
 
 export const filterProductsByName = async (name) => {
     try {
@@ -71,14 +102,13 @@ export const filterProductsByName = async (name) => {
                 }
             },
             { headers: { 'X-Auth': authString } }
-        );
+        ).catch(async (error) => await handleRequestError(error, () => filterProductsByName(name)));
         return {
             data: response.data.result,
             totalCount: response.data.result.length
         };
     } catch (error) {
-        console.error('Error filtering products by name:', error);
-        throw error;
+        await handleRequestError(error, () => filterProductsByName(name));
     }
 };
 
@@ -100,11 +130,10 @@ export const filterProductsByPrice = async (price) => {
             totalCount: response.data.result.length
         };
     } catch (error) {
-        console.error('Error filtering products by price:', error);
-        throw error;
+        await handleRequestError(error, () => filterProductsByPrice(price));
     }
 };
-//Возвращает упорядоченный список идентификаторов товаров, соответствующих заданному значению.
+
 export const filterProductsByBrand = async (brand) => {
     try {
         const authString = generateAuthString();
@@ -123,11 +152,10 @@ export const filterProductsByBrand = async (brand) => {
             totalCount: response.data.result.length
         };
     } catch (error) {
-        console.error('Error filtering products by brand:', error);
-        throw error;
+        await handleRequestError(error, () => filterProductsByBrand(brand));
     }
 };
-//возвращает при передаче параметра field упорядоченный список значений данного поля товаров.
+
 export const fetchFields = async (field) => {
     try {
         const authString = generateAuthString();
@@ -147,7 +175,6 @@ export const fetchFields = async (field) => {
             data: response.data.result.filter(param => param !== null)
         };
     } catch (error) {
-        console.error('Error fetching fields:', error);
-        throw error;
+        await handleRequestError(error, () => fetchFields(field));
     }
 };

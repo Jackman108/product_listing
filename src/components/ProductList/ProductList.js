@@ -55,7 +55,7 @@ const ProductList = () => {
         <span>{`Page ${page}`}</span>
         <button onClick={() =>
           handlePageChange(page + 1)
-        } disabled={page === totalPages || products.data.length <= 50}>
+        } disabled={page === totalPages}>
           Next Page
         </button>
       </div>
