@@ -2,7 +2,8 @@ import axios from 'axios';
 import { generateAuthString } from '../utils/auth.js';
 import { removeDuplicateProductsId } from '../helpers/removeDuplicateProductsId.js';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = 'http://api.valantis.store:40000/'
+
 
 const handleRequestError = async (error, retryFunction) => {
     if (error.response && error.response.status === 500) {
