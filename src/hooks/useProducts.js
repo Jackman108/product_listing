@@ -8,68 +8,96 @@ import {
     filterProductsByBrand
 } from '../api/products';
 
-
 const useProducts = () => {
+    const [productIds, setProductIds] = useState([]);
     const [products, setProducts] = useState({ data: [], totalCount: 0 });
     const [page, setPage] = useState(1);
     const [nameFilter, setNameFilter] = useState('');
     const [priceFilter, setPriceFilter] = useState('');
     const [brandFilter, setBrandFilter] = useState('');
     const [brandOptions, setBrandOptions] = useState([]);
-    const [loadedProductsCount, setLoadedProductsCount] = useState(0);
+    const [loading, setLoading] = useState(false); 
     const totalPages = Math.ceil(products.totalCount / 50);
 
-    const applyFilters = useCallback(async (productIds) => {
-        let filteredProductIds = [...productIds]; 
-
-        if (nameFilter) {
-            const filteredByName = await filterProductsByName(nameFilter);
-            filteredProductIds = filteredProductIds.filter(id => filteredByName.data.includes(id));
+    const applyFilters = useCallback(async (ids) => {
+        let filteredIds = [...ids];
+    
+        try {
+            if (nameFilter) {
+                const filteredByName = await filterProductsByName(nameFilter);
+                filteredIds = filteredIds.filter(id => filteredByName.data.includes(id));
+            }
+    
+            if (priceFilter) {
+                const filteredByPrice = await filterProductsByPrice(priceFilter);
+                filteredIds = filteredIds.filter(id => filteredByPrice.data.includes(id));
+            }
+    
+            if (brandFilter) {
+                const filteredByBrand = await filterProductsByBrand(brandFilter);
+                filteredIds = filteredIds.filter(id => filteredByBrand.data.includes(id));
+            }
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            console.log('Retrying...');
+            return applyFilters(ids); // Retry applying filters
         }
-
-        if (priceFilter) {
-            const filteredByPrice = await filterProductsByPrice(priceFilter);
-            filteredProductIds = filteredProductIds.filter(id => filteredByPrice.data.includes(id));
-        }
-
-        if (brandFilter) {
-            const filteredByBrand = await filterProductsByBrand(brandFilter);
-            filteredProductIds = filteredProductIds.filter(id => filteredByBrand.data.includes(id));
-        }
-
-        return filteredProductIds;
+    
+        return filteredIds;
     }, [nameFilter, priceFilter, brandFilter]);
+    
+
+    useEffect(() => {
+        const loadInitialProducts = async () => {
+            try {
+                if (productIds.length === 0) {
+                    const { data: fetchedProductIds } = await fetchProducts();
+                    setProductIds(fetchedProductIds);
+                }
+            } catch (error) {
+                console.error('Error fetching initial product IDs:', error);
+                if (error.response && error.response.status === 500) {
+                    console.error('fetching initial, retrying...');
+                    await loadInitialProducts();
+                    return;
+                }
+            }
+        };
+
+        loadInitialProducts();
+    }, [productIds]);
 
     useEffect(() => {
         const loadProducts = async () => {
             try {
-                const { data: productIds, totalCount } = await fetchProducts(page);
-                if (!productIds) {
-                    setProducts({ data: [], totalCount: 0 });
-                    return;
-                }
+                if (productIds.length === 0) return;
 
-                let filteredProductIds = await applyFilters(productIds);
-
+                const filteredIds = await applyFilters(productIds);
+                setLoading(true);
                 setProducts(prevState => ({
                     ...prevState,
-                    totalCount: totalCount
+                    totalCount: filteredIds.length
                 }));
 
                 const startIndex = (page - 1) * 50;
-                const pageFilteredProductIds = filteredProductIds.slice(startIndex, startIndex + 50 - loadedProductsCount);
+                const pageFilteredIds = filteredIds.slice(startIndex, startIndex + 50);
 
-                const productsData = await fetchItems(pageFilteredProductIds);
-
-                setProducts({ data: productsData.data.slice(0, 50), totalCount });
-
-                setLoadedProductsCount(productsData.data.length);
+                const productsData = await fetchItems(pageFilteredIds);
+                setProducts({ data: productsData.data, totalCount: filteredIds.length });
             } catch (error) {
                 console.error('Error loading products:', error);
+                if (error.response && error.response.status === 500) {
+                    console.error('loading products, retrying...');
+                    await loadProducts();
+                    return;
+                }
+            }finally {
+                setLoading(false);
             }
         };
+
         loadProducts();
-    }, [page, loadedProductsCount, applyFilters]);
+    }, [page, productIds, applyFilters]);
 
     useEffect(() => {
         const loadBrandOptions = async () => {
@@ -78,20 +106,15 @@ const useProducts = () => {
                 setBrandOptions(options.data);
             } catch (error) {
                 console.error('Error loading brand options:', error);
+                if (error.response && error.response.status === 500) {
+                    console.error('loading brand, retrying...');
+                    await loadBrandOptions();
+                    return;
+                }
             }
         };
         loadBrandOptions();
     }, []);
-
-    const updateTotalCount = async () => {
-        try {
-            const filteredProductIds = await applyFilters([]);
-
-            setProducts(prevState => ({ ...prevState, totalCount: filteredProductIds.length }));
-        } catch (error) {
-            console.error('Error updating total count:', error);
-        }
-    };
 
     const handleNameFilterChange = (event) => {
         setNameFilter(event.target.value);
@@ -110,10 +133,6 @@ const useProducts = () => {
 
     const handlePageChange = (pageNumber) => {
         setPage(pageNumber);
-        setNameFilter('');
-        setPriceFilter('');
-        setBrandFilter('');
-        updateTotalCount();
     };
 
     return {
@@ -121,13 +140,13 @@ const useProducts = () => {
         nameFilter,
         priceFilter,
         brandFilter,
+        loading,
         handleNameFilterChange,
         handlePriceFilterChange,
         handleBrandFilterChange,
         brandOptions,
         totalPages,
         handlePageChange,
-        loadedProductsCount,
         page
     };
 };

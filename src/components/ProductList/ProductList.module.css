@@ -11,6 +11,7 @@
     font-size: 24px;
     margin-bottom: 20px;
     text-align: center;
+    color: #A57D02;
 }
 
 .product-list {
@@ -27,10 +28,10 @@
 }
 
 .product-list-buttons button {
-    margin-right: 10px;
+    width: 145px;
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #007bff;
+    background-color: #A57D02;
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -39,7 +40,7 @@
 }
 
 .product-list-buttons button:hover {
-    background-color: #0056b3;
+    background-color: #7e6002;
 }
 .product-list-buttons button:disabled {
     background-color: #ccc;
@@ -47,5 +48,19 @@
   }
   
   .product-list-buttons button:hover:not(:disabled) {
-    background-color: #0056b3;
+    background-color: #7e6002;;
+  }
+
+  .page-indicator {
+    font-size: 1.5rem; /* Increase font size */
+    color: #A57D02; /* Orange color */
+    font-weight: bold; /* Bold font */
+    text-transform: uppercase; /* Uppercase text */
+    letter-spacing: 2px; /* Increase letter spacing */
+    border: 2px solid #A57D02; /* Orange border */
+    padding: 5px 10px; /* Add padding */
+    margin: 0 20px;
+    border-radius: 5px; /* Add border radius */
+    background-color: #fff; /* White background */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add shadow */
   }

@@ -2,28 +2,28 @@
 
 .product-item {
     border: 1px solid #ccc;
-    border-radius: 10px; /* Закругление углов */
-    padding: 20px; /* Внутренний отступ */
-    margin-bottom: 30px; /* Отступ снизу */
-    background-color: #fff; /* Фоновый цвет */
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* Тень */
-    display: grid; /* Используем сетку */
-    grid-template-columns: 1fr 2fr; /* Создаем две колонки */
-    gap: 20px; /* Отступ между колонками */
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    background-color: #fff;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
   }
   
   .product-item div {
-    border-radius: 5px; /* Закругление углов */
-    padding: 10px; /* Внутренний отступ */
-    background-color: #f4f4f4; /* Фоновый цвет */
-    overflow: hidden; /* Предотвращаем выход текста за границы */
-    text-overflow: ellipsis; /* Обрезаем текст, если он не помещается */
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #a57c0215;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .product-item div:first-child {
-    font-weight: bold; /* Жирный шрифт для первого дива */
+    font-weight: bold;
   }
 
   .product-item div:last-child {
-    justify-self: end; /* Выравниваем последний див по правому краю */
+    justify-self: end;
   }

@@ -6,7 +6,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const handleRequestError = async (error, retryFunction) => {
     if (error.response && error.response.status === 500) {
-        console.error('Authorization error, retrying...');
+        console.error('response error, retrying...');
         await retryFunction();
         return;
     }
@@ -19,7 +19,7 @@ export const fetchProducts = async () => {
         let productIds = [];
         let totalCount = 0;
         let offset = 0;
-        const limit = 1000;
+        const limit = 10000;
 
         while (true) {
             const authString = generateAuthString();
