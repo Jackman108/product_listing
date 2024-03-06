@@ -2,7 +2,7 @@ import axios from 'axios';
 import { generateAuthString } from '../utils/auth.js';
 import { removeDuplicateProductsId } from '../helpers/removeDuplicateProductsId.js';
 
-const API_URL = 'http://api.valantis.store:40000/'
+const API_URL = 'https://api.valantis.store:41000/'
 
 
 const handleRequestError = async (error, retryFunction) => {
